@@ -10,19 +10,28 @@ def getContours(img):
 
 
 # get the binary from the difference between frame and base images
-def recognizePerson(original, img, bg, result, cron):
+def recognizePerson(original, img, bg, result, cron, lista):
+    kernel = np.ones((4,4),np.uint8)
     res = cv2.absdiff(img, bg)
     ret, th = cv2.threshold(res, 10, 255, cv2.THRESH_BINARY )
+    
+    th = cv2.morphologyEx(th, cv2.MORPH_OPEN, kernel)
+    
+    th = cv2.morphologyEx(th, cv2.MORPH_CLOSE, kernel)
+ 
     cont = getContours(th)
 
     cv2.imshow('difference', th)
 
     for i in cont:
         area = cv2.contourArea(i)
-        if area > 5000:
+        if area > 4000:
             x, y, w, h = cv2.boundingRect(i)
             summarize(original, x, y, w, h, result, cron)
+            lista.append(original)
             break
+
+   
 
 # get only the parts where the area's contours is > 5000
 # that parts are save in the result video
@@ -59,9 +68,9 @@ def playVideo():
 
 
 if __name__=='__main__':
-
+    lista = []
     # get the video
-    cat = cv2.VideoCapture('./resources/dv_resources/test3.mp4')
+    cat = cv2.VideoCapture('./resources/input.mp4')
 
     # get the base frame
     _, back = cat.read()
@@ -82,7 +91,7 @@ if __name__=='__main__':
         # convert to gray the frame
         fr = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        recognizePerson(frame, fr, back_gray, result, cron)
+        recognizePerson(frame, fr, back_gray, result, cron, lista)
 
         cv2.imshow('videocamera', frame)
         
@@ -92,7 +101,8 @@ if __name__=='__main__':
 
     cat.release()
     result.release()
-
+    
     #playVideo
     playVideo()
+    cv2.destroyAllWindows()
 
